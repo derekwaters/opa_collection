@@ -47,64 +47,23 @@ class ItemNotDefined(Exception):
 class OPAModule(AnsibleModule):
     url = None
     AUTH_ARGSPEC = dict(
-        controller_host=dict(
+        opa_host=dict(
             required=False,
-            aliases=['tower_host', 'aap_hostname'],
-            fallback=(env_fallback, ['CONTROLLER_HOST', 'TOWER_HOST', 'AAP_HOSTNAME'])),
-        controller_username=dict(
-            required=False,
-            aliases=['tower_username', 'aap_username'],
-            fallback=(env_fallback, ['CONTROLLER_USERNAME', 'TOWER_USERNAME', 'AAP_USERNAME'])),
-        controller_password=dict(
-            no_log=True,
-            aliases=['tower_password', 'aap_password'],
-            required=False,
-            fallback=(env_fallback, ['CONTROLLER_PASSWORD', 'TOWER_PASSWORD', 'AAP_PASSWORD'])),
+            fallback=(env_fallback, ['OPA_HOST'])),
         validate_certs=dict(
             type='bool',
-            aliases=['tower_verify_ssl', 'aap_validate_certs'],
+            aliases=['verify_ssl', 'opa_validate_certs'],
             required=False,
-            fallback=(env_fallback, ['CONTROLLER_VERIFY_SSL', 'TOWER_VERIFY_SSL', 'AAP_VALIDATE_CERTS'])),
-        request_timeout=dict(
-            type='float',
-            aliases=['aap_request_timeout'],
-            required=False,
-            fallback=(env_fallback, ['CONTROLLER_REQUEST_TIMEOUT', 'AAP_REQUEST_TIMEOUT'])),
-        aap_token=dict(
-            type='raw',
-            no_log=True,
-            required=False,
-            fallback=(env_fallback, ['CONTROLLER_OAUTH_TOKEN', 'TOWER_OAUTH_TOKEN', 'AAP_TOKEN'])
-        ),
-        controller_config_file=dict(
-            type='path',
-            aliases=['tower_config_file'],
-            required=False,
-            default=None),
+            fallback=(env_fallback, ['VERIFY_SSL', 'OPA_VALIDATE_CERTS', 'VALIDATE_CERTS'])),
     )
-    # Associations of these types are ordered and have special consideration in the modified associations function
-    ordered_associations = ['instance_groups', 'galaxy_credentials', 'input_inventories']
     short_params = {
-        'host': 'controller_host',
-        'username': 'controller_username',
-        'password': 'controller_password',
+        'host': 'opa_host',
         'verify_ssl': 'validate_certs',
-        'request_timeout': 'request_timeout',
     }
-    host = '127.0.0.1'
-    username = None
-    password = None
+    host = 'https://127.0.0.1:8181'
     verify_ssl = True
-    request_timeout = 10
-    authenticated = False
-    config_name = 'tower_cli.cfg'
-    version_checked = False
     error_callback = None
     warn_callback = None
-    apps_api_versions = {
-        "awx": "v2",
-        "gateway": "v1",
-    }
 
     def __init__(self, argument_spec=None, direct_params=None, error_callback=None, warn_callback=None, **kwargs):
         full_argspec = {}
@@ -162,7 +121,7 @@ class OPAModule(AnsibleModule):
             endpoint = "/{0}".format(endpoint)
         hostname_prefix = self.url_prefix.rstrip("/")
         api_path = self.api_path(app_key=app_key)
-        api_version = self.apps_api_versions.get(app_key, self.apps_api_versions.get("awx", "v2"))
+        api_version = '/v1/'
         if not endpoint.startswith(hostname_prefix + api_path):
             endpoint = hostname_prefix + f"{api_path}{api_version}{endpoint}"
         if not endpoint.endswith('/') and '?' not in endpoint:
@@ -176,123 +135,13 @@ class OPAModule(AnsibleModule):
 
         return url
 
-    def load_config_files(self):
-        # Load configs like TowerCLI would have from least import to most
-        config_files = ['/etc/tower/tower_cli.cfg', join(expanduser("~"), ".{0}".format(self.config_name))]
-        local_dir = getcwd()
-        config_files.append(join(local_dir, self.config_name))
-        while split(local_dir)[1]:
-            local_dir = split(local_dir)[0]
-            config_files.insert(2, join(local_dir, ".{0}".format(self.config_name)))
-
-        # If we have a specified  tower config, load it
-        if self.params.get('controller_config_file'):
-            duplicated_params = [fn for fn in self.AUTH_ARGSPEC if fn != 'controller_config_file' and self.params.get(fn) is not None]
-            if duplicated_params:
-                self.warn(
-                    (
-                        'The parameter(s) {0} were provided at the same time as controller_config_file. '
-                        'Precedence may be unstable, we suggest either using config file or params.'
-                    ).format(', '.join(duplicated_params))
-                )
-            try:
-                # TODO: warn if there are conflicts with other params
-                self.load_config(self.params.get('controller_config_file'))
-            except ConfigFileException as cfe:
-                # Since we were told specifically to load this we want it to fail if we have an error
-                self.fail_json(msg=cfe)
-        else:
-            for config_file in config_files:
-                if exists(config_file) and not isdir(config_file):
-                    # Only throw a formatting error if the file exists and is not a directory
-                    try:
-                        self.load_config(config_file)
-                    except ConfigFileException:
-                        self.fail_json(msg='The config file {0} is not properly formatted'.format(config_file))
-
-    def load_config(self, config_path):
-        # Validate the config file is an actual file
-        if not isfile(config_path):
-            raise ConfigFileException('The specified config file does not exist')
-
-        if not access(config_path, R_OK):
-            raise ConfigFileException("The specified config file cannot be read")
-
-        # Read in the file contents:
-        with open(config_path, 'r') as f:
-            config_string = f.read()
-
-        # First try to yaml load the content (which will also load json)
-        try:
-            try_config_parsing = True
-            if HAS_YAML:
-                try:
-                    config_data = yaml.load(config_string, Loader=yaml.SafeLoader)
-                    # If this is an actual ini file, yaml will return the whole thing as a string instead of a dict
-                    if not isinstance(config_data, dict):
-                        raise AssertionError("The yaml config file is not properly formatted as a dict.")
-                    try_config_parsing = False
-
-                except (AttributeError, yaml.YAMLError, AssertionError):
-                    try_config_parsing = True
-
-            if try_config_parsing:
-                # TowerCLI used to support a config file with a missing [general] section by prepending it if missing
-                if '[general]' not in config_string:
-                    config_string = '[general]\n{0}'.format(config_string)
-
-                config = ConfigParser()
-
-                try:
-                    placeholder_file = StringIO(config_string)
-                    # py2 ConfigParser has readfp, that has been deprecated in favor of read_file in py3
-                    # This "if" removes the deprecation warning
-                    if hasattr(config, 'read_file'):
-                        config.read_file(placeholder_file)
-                    else:
-                        config.readfp(placeholder_file)
-
-                    # If we made it here then we have values from reading the ini file, so let's pull them out into a dict
-                    config_data = {}
-                    for honorred_setting in self.short_params:
-                        try:
-                            config_data[honorred_setting] = config.get('general', honorred_setting)
-                        except NoOptionError:
-                            pass
-
-                except Exception as e:
-                    raise_from(ConfigFileException("An unknown exception occured trying to ini load config file: {0}".format(e)), e)
-
-        except Exception as e:
-            raise_from(ConfigFileException("An unknown exception occured trying to load config file: {0}".format(e)), e)
-
-        # If we made it here, we have a dict which has values in it from our config, any final settings logic can be performed here
-        for honorred_setting in self.short_params:
-            if honorred_setting in config_data:
-                # Veriffy SSL must be a boolean
-                if honorred_setting == 'verify_ssl':
-                    if isinstance(config_data[honorred_setting], str):
-                        setattr(self, honorred_setting, strtobool(config_data[honorred_setting]))
-                    else:
-                        setattr(self, honorred_setting, bool(config_data[honorred_setting]))
-                else:
-                    setattr(self, honorred_setting, config_data[honorred_setting])
-
-    def logout(self):
-        # This method is intended to be overridden
-        pass
-
     def fail_json(self, **kwargs):
-        # Try to log out if we are authenticated
-        self.logout()
         if self.error_callback:
             self.error_callback(**kwargs)
         else:
             super().fail_json(**kwargs)
 
     def exit_json(self, **kwargs):
-        # Try to log out if we are authenticated
-        self.logout()
         super().exit_json(**kwargs)
 
     def warn(self, warning):

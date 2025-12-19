@@ -1,0 +1,78 @@
+---
+- name: Test opa policy
+  hosts: all
+  connection: local
+
+  tasks:
+    - name: Create a policy
+      derekwaters.opa.policy:
+        id: some_policy
+        state: present
+        definition: |
+          package aap_tests
+
+          default allowed := {
+            "allowed": true,
+            "violations": [],
+          }
+
+          default has_change_or_incident := false
+
+          has_change_or_incident if {
+            count(input.extra_vars.change_number) > 0
+          }
+
+          has_change_or_incident if {
+            count(input.extra_vars.incident_number) > 0
+          }
+
+          allowed := {
+            "allowed": false,
+            "violations": ["No change or incident number supplied"],
+          } if {
+            has_change_or_incident == false
+          }
+
+
+    - name: Update a policy
+      derekwaters.opa.policy:
+        id: some_policy
+        state: present
+        definition: |
+          package aap_tests
+
+          default allowed := {
+            "allowed": true,
+            "violations": [],
+          }
+
+          violating_credentials := {cred.name | cred := input.credentials[_]; cred.organization == null}
+
+          default has_change_or_incident := false
+
+          has_change_or_incident if {
+            count(input.extra_vars.change_number) > 0
+          }
+
+          has_change_or_incident if {
+            count(input.extra_vars.incident_number) > 0
+          }
+
+          allowed := {
+            "allowed": false,
+            "violations": ["No change or incident number supplied"],
+          } if {
+            has_change_or_incident == false
+          }
+
+          allowed := {
+            "allowed": false,
+            "violations": ["Credential with no Organization"],
+          } if {
+            count(violating_credentials) > 0
+          }
+      
+    - name: Delete a policy
+      derekwaters.opa.policy:
+        id: some_policy
+        state: absent

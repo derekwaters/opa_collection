@@ -1,0 +1,13 @@
+[Unit]
+Description=Open Policy Agent (OPA) Container access on port 8181
+After=local-fs.target
+
+[Container]
+# Note that this tag is required to get an ARM build of the container
+Image=docker.io/openpolicyagent/opa:latest-static-debug
+PublishPort=8181:8181
+Exec=run --server --log-level debug --addr=0.0.0.0:8181
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target

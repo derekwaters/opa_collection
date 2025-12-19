@@ -1,0 +1,16 @@
+---
+- name: Deploy OPA systemd unit configuration
+  ansible.builtin.template:
+    src: templates/opa.container
+    dest: /etc/containers/systemd/opa.container
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Start the OPA systemd service
+  ansible.builtin.systemd_service:
+    state: started
+    daemon_reload: true
+    name: opa
+

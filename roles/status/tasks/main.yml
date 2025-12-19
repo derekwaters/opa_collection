@@ -1,0 +1,20 @@
+---
+# 'status' role to check the status of the OPA server
+
+ansible.builtin.assert:
+  that:
+    - opa_host is defined
+    - opa_port is defined
+
+ansible.builtin.set_fact:
+  __opa_status_uri: "{{ opa_host }}:{{ opa_port }}/v1/status"
+
+
+ansible.builtin.uri:
+  url: "{{ __opa_status_uri }}"
+  return_content: true
+  body_format: json
+register: __opa_status
+
+ansible.builtin.debug:
+  var: __opa_status

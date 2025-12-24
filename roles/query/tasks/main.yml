@@ -8,3 +8,4 @@
 #   opa_query_result
 - ansible.builtin.include_tasks: "pre-check.yml"
 - ansible.builtin.include_tasks: "query.yml"
+  

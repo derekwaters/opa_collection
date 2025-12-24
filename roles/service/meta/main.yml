@@ -1,0 +1,17 @@
+galaxy_info:
+  author: Derek Waters
+  description: This role allows you to install or remove the OPA server as a systemd service
+  company: frisbeeworld
+
+  license: GPL-3.0
+
+  min_ansible_version: 2.1
+
+  galaxy_tags: 
+    - opa
+    - policy
+    - policies
+    - policyascode
+    - OpenPolicyAgent
+
+dependencies: []

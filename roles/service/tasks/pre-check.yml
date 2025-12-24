@@ -1,0 +1,14 @@
+---
+- name: Validate mandatory parameters
+  ansible.builtin.assert:
+    that:
+      - opa_service is defined
+      - opa_service.state is defined
+    fail_msg: "opa_service.state must be defined"
+
+- name: Validate service state
+  ansible.builtin.assert:
+    that:
+      - opa_service.state is defined
+      - "opa_service.state == 'present' or opa_service.state == 'absent'"
+    fail_msg: "opa_service.state must be set to 'present' or 'absent'"

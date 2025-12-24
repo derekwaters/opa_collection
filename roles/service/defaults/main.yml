@@ -1,0 +1,4 @@
+---
+# defaults file for opa_service
+# opa_service:
+#   state:        The state of the service. (required, 'present' or 'absent')

@@ -1,0 +1,10 @@
+---
+
+- ansible.builtin.include_tasks: "pre-check.yml"
+
+- ansible.builtin.include_tasks: "install.yml"
+  when: "opa_service.state == 'present'"
+
+- ansible.builtin.include_tasks: "delete.yml"
+  when: "opa_service.state == 'absent'"
+

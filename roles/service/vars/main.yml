@@ -1,2 +1,4 @@
 ---
 # vars file for opa_service
+opa_service:
+  state: present

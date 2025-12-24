@@ -1,0 +1,11 @@
+---
+#   opa_host
+#   opa_port
+#   opa_policy:
+#     namespace:
+#     data:
+#     state: [present / absent]
+# Output:
+#   opa_policy_result
+- ansible.builtin.include_tasks: "pre-check.yml"
+- ansible.builtin.include_tasks: "policy.yml"

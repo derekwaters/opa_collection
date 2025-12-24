@@ -1,0 +1,23 @@
+---
+- name: Build the URL endpoint
+  ansible.builtin.set_fact:
+    __uri_endpoint: "http://{{ opa_host }}:{{ opa_port | default('8181') }}/v1/data/{{ opa_policy_namespace }}/{{ opa_policy_rule }}"
+
+- name: Build the input data structure
+  ansible.builtin.set_fact:
+    __query_input:
+      input: "{{ opa_input_data }}"
+
+- name: POST to the document endpoint
+  ansible.builtin.uri:
+    url: "{{ __uri_endpoint }}"
+    method: POST
+    body: "{{ __query_input | to_json }}"
+    headers:
+      Content-Type: application/json
+  register: __opa_query_result_raw
+
+- name: Register the output variable
+  ansible.builtin.set_fact:
+    opa_query_result: "{{ __opa_query_result_raw.json }}"
+    

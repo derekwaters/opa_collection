@@ -1,0 +1,28 @@
+---
+- name: Validate mandatory parameters
+  ansible.builtin.assert:
+    that:
+      - opa_host is defined
+      - opa_policy is defined
+    fail_msg: "opa_host and opa_policy must be defined"
+
+- name: Validate policy state
+  ansible.builtin.assert:
+    that:
+      - opa_policy.state is defined
+      - "opa_policy.state == 'present' or opa_policy.state == 'absent'"
+    fail_msg: "opa_policy.state must be set to 'present' or 'absent'"
+
+- name: Validate that the policy namespace is defined
+  ansible.builtin.assert:
+    that:
+      - opa_policy.namespace is defined
+    fail_msg: "opa_policy.namespace must be defined"
+
+- name: Validate that policy data is supplied if the policy should be present
+  ansible.builtin.assert:
+    that:
+      - opa_policy.data is defined
+    fail_msg: "opa_policy.data must be set if the policy should be present"
+  when: "opa_policy.state == 'present'"
+      

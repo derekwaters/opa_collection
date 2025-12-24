@@ -1,0 +1,9 @@
+---
+- name: Validate mandatory parameters
+  ansible.builtin.assert:
+    that:
+      - opa_host is defined
+      - opa_policy_namespace is defined
+      - opa_policy_rule is defined
+      - opa_input_data is defined
+    fail_msg: "opa_host, opa_policy_namespace, opa_policy_rule and opa_input_data must be defined"

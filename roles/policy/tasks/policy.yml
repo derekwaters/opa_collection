@@ -1,0 +1,25 @@
+---
+- name: Build the URL endpoint
+  ansible.builtin.set_fact:
+    __uri_endpoint: "http://{{ opa_host }}:{{ opa_port | default('8181') }}/v1/policies/{{ opa_policy.namespace }}"
+
+- name: PUT the data when state is 'present'
+  ansible.builtin.uri:
+    url: "{{ __uri_endpoint }}"
+    method: PUT
+    body: "{{ opa_policy.data }}"
+    headers:
+      Content-Type: text/plain
+  when: "opa_policy.state == 'present'"
+  register: __opa_policy_result_present
+
+- name: DELETE the data when state is 'absent'
+  ansible.builtin.uri:
+    url: "{{ __uri_endpoint }}"
+    method: DELETE
+  when: "opa_policy.state == 'absent'"
+  register: __opa_policy_result_absent
+
+- name: Set the actual Output
+  ansible.builtin.set_fact:
+    opa_policy_result: "{{ __opa_policy_result_present if opa_policy.state == 'present' else __opa_policy_result_absent }}"

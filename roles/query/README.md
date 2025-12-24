@@ -1,38 +1,63 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+This role allows you to perform queries against policies in a running OpenPolicyAgent (OPA) server.
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+None.
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+The following variables are used by this role:
+
+Input Variables:
+
+opa_host:             The hostname of the OpenPolicyAgent server. (required)
+opa_port:             The port of the OpenPolicyAgent server. (optional, default '8181')
+opa_policy_namespace: The namespace of the policy to evaluate. (required)
+opa_policy_rule:      The name of the policy rule to evaluate. (required)
+opa_input_data:       An object containing all of the data that will be provided to
+                      OPA to evaluate the policy against. (required)
+                      
+Output Variables:
+
+opa_query_result  The results of the query operation are stored in this value.
+                  The json member value will contain the json data returned from OPA.
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+None.
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+The following playbook tests input data against a pre-loaded rego policy 
+on an OPA server hosted on opa.example.com in the test_policy namespace.
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
+    - name: Test against a policy
+      ansible.builtin.include_role:
+        name: derekwaters.opa.query
+      vars:
+        opa_host: opa.example.com
+        opa_port: 8181
+        opa_policy_namespace: test_policy
+        opa_policy_rule: sample
+        opa_input_data:
+          extra_vars:
+            aaa: bbb
+            
 License
 -------
 
-BSD
+GPL3
 
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Derek Waters
+email: derek@frisbeeworld.com
+https://github.com/derekwaters

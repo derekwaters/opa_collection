@@ -1,2 +1,7 @@
 ---
-# defaults file for query
+# opa_host:             The hostname of the OpenPolicyAgent server. (required)
+# opa_port:             The port of the OpenPolicyAgent server. (optional, default '8181')
+# opa_policy_namespace: The namespace of the policy to evaluate. (required)
+# opa_policy_rule:      The name of the policy rule to evaluate. (required)
+# opa_input_data:       An object containing all of the data that will be provided to
+#                       OPA to evaluate the policy against. (required)

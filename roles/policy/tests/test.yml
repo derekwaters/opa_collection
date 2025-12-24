@@ -2,4 +2,13 @@
 - hosts: localhost
   remote_user: root
   roles:
-    - policy
+    - derekwaters.opa.policy
+  vars:
+    opa_host: localhost
+    opa_port: 8181
+    opa_policy:
+      namespace: collection_test
+      state: present
+      data: |
+        sample_rego
+

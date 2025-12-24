@@ -2,4 +2,12 @@
 - hosts: localhost
   remote_user: root
   roles:
-    - query
+    - derekwaters.opa.query
+  vars:
+    opa_host: localhost
+    opa_port: 8181
+    opa_policy_namespace: collection_test
+    opa_policy_rule: allowed
+    opa_input_data:
+      extra_vars:
+        change_number: "CHG-0001"

@@ -1,2 +1,7 @@
 ---
-# defaults file for policy
+# opa_host:     The hostname of the OpenPolicyAgent server. (required)
+# opa_port:     The port of the OpenPolicyAgent server. (optional, default '8181')
+# opa_policy:   The policy object being created, updated or deleted.
+#   namespace   The policy namespace / identifier. (required)
+#   state       The state of the policy. (required, 'present' or 'absent')
+#   data        The plaintext rego data for the policy. (required if state is 'present')

@@ -1,38 +1,62 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+This role allows you to create, update and delete policy definitions in a running OpenPolicyAgent (OPA) server.
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+None.
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+The following variables are used by this role:
+
+Input Variables:
+
+opa_host:     The hostname of the OpenPolicyAgent server. (required)
+opa_port:     The port of the OpenPolicyAgent server. (optional, default '8181')
+opa_policy:   The policy object being created, updated or deleted.
+  namespace   The policy namespace / identifier. (required)
+  state       The state of the policy. (required, 'present' or 'absent')
+  data        The plaintext rego data for the policy. (required if state is 'present')
+
+Output Variables:
+
+opa_policy_result   The results of the policy operation are stored in this value.
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+None.
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+The following playbook adds a new rego policy to an OPA server hosted on 
+opa.example.com in the test_policy namespace.
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
+    - name: Add a new policy
+      ansible.builtin.include_role:
+        name: derekwaters.opa.policy
+      vars:
+        opa_host: opa.example.com
+        opa_port: 8181
+        opa_policy:
+          namespace: test_policy
+          state: present
+          data: |
+            ...rego definition...
+  
 License
 -------
 
-BSD
+GPL3
 
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Derek Waters
+email: derek@frisbeeworld.com
+https://github.com/derekwaters

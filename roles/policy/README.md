@@ -1,5 +1,5 @@
-Role Name
-=========
+derekwaters.opa_collection.policy
+=================================
 
 This role allows you to create, update and delete policy definitions in a running OpenPolicyAgent (OPA) server.
 

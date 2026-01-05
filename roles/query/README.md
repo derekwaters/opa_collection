@@ -1,5 +1,5 @@
-Role Name
-=========
+derekwaters.opa_collection.query
+================================
 
 This role allows you to perform queries against policies in a running OpenPolicyAgent (OPA) server.
 
